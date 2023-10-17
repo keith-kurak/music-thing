@@ -9,13 +9,13 @@ import {
 } from "react-native-safe-area-context";
 import { getNote, shiftNote } from "../lib/transpose";
 
-function FretSlider({ startingNote, backgroundColor, totalNotes }) {
+function FretSlider({ startingNote, backgroundColor, totalNotes, frets }) {
   const screenFrame = useSafeAreaFrame();
   const safeAreaInsets = useSafeAreaInsets();
 
   const progress = useSharedValue(0);
   const min = useSharedValue(0);
-  const max = useSharedValue(15);
+  const max = useSharedValue(frets);
 
   const [note, setNote] = useState(startingNote);
 
@@ -70,11 +70,7 @@ function FretSlider({ startingNote, backgroundColor, totalNotes }) {
               rotate: "90deg",
             },
             {
-              translateX:
-                sliderHeight / 2 -
-                fretWidth / 2 +
-                sliderThumbRadius / 2 +
-                totalSafeArea / 2,
+              translateX: (sliderHeight + sliderThumbRadius) / 2,
             },
             {
               translateY: (sliderHeight - fretWidth) / 2,
@@ -95,7 +91,7 @@ function FretSlider({ startingNote, backgroundColor, totalNotes }) {
           minimumValue={min}
           maximumValue={max}
           thumbWidth={sliderThumbRadius}
-          step={15}
+          step={frets}
           snapToStep={true}
           renderBubble={() => null}
           markStyle={{
@@ -104,13 +100,12 @@ function FretSlider({ startingNote, backgroundColor, totalNotes }) {
             backgroundColor: "#fff",
             position: "absolute",
             borderRadius: 0,
-            top: -2,
             transform: [
               {
                 rotate: "90deg",
               },
               {
-                translateY: (-1 * sliderThumbRadius) / 2 - 2,
+                translateY: (fretWidth - 4) / 2,
               },
             ],
           }}
@@ -121,11 +116,12 @@ function FretSlider({ startingNote, backgroundColor, totalNotes }) {
 }
 
 const instruments = {
-  Bass: ["E", "A", "D", "G"],
-  Guitar: ["E", "A", "D", "G", "B", "E"],
+  Bass: { notes: ["E", "A", "D", "G"], frets: 21 },
+  Guitar: { notes: ["E", "A", "D", "G", "B", "E"], frets: 20 },
+  Ukulele: { notes: ["G", "C", "E", "A"], frets: 12 },
 };
 
-const instrumentIndices = ["Guitar", "Bass"];
+const instrumentIndices = ["Guitar", "Bass", "Ukulele"];
 
 const colors = ["pink", "blue", "green", "purple", "orange", "red"];
 
@@ -137,33 +133,29 @@ export default function Index() {
 
   return (
     <View style={{ flex: 1, flexDirection: "row" }}>
-      {myInstrument.map((note, index) => (
+      {myInstrument.notes.map((note, index) => (
         <FretSlider
-          key={note + index.toString()}
+          key={note + index.toString() + instrumentIndex.toString()}
           startingNote={note}
-          backgroundColor={colors[index]}
-          totalNotes={myInstrument.length}
+          backgroundColor={colors[index + (instrumentIndex === 2 ? 2 : 0 /* ukulele hack */)]}
+          totalNotes={myInstrument.notes.length}
+          frets={myInstrument.frets}
         />
       ))}
       <View
         style={{
           position: "absolute",
           top: safeAreaInsets.top,
-          left: 0,
-          right: 0,
-          height: 40,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
+          left: 20,
+          right: 20,
+          height: 50,
         }}
       >
         <SegmentedControl
           values={instrumentIndices}
           selectedIndex={instrumentIndex}
           onChange={(event) => {
-            setInstrumentIndex({
-              selectedIndex: event.nativeEvent.selectedSegmentIndex,
-            });
+            setInstrumentIndex(event.nativeEvent.selectedSegmentIndex);
           }}
         />
       </View>
